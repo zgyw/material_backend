@@ -18,4 +18,12 @@ public interface MaterielLevelService {
     void exportTemplate(HttpServletResponse response);
 
     void importMateriel(MultipartFile file);
+
+    MaterielLevel detail(Integer id);
+
+    MaterielLevel modify(MaterielLevelForm form, MultipartFile file);
+
+    byte[] getPhoto(Integer id,HttpServletResponse response);
+
+    void delete(String code);
 }

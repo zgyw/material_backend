@@ -8,4 +8,6 @@ import java.util.List;
 public interface MaterielRecordsRepository extends JpaRepository<MaterielRecords,Integer> {
 
     List<MaterielRecords> findByOrderId(Integer orderId);
+
+    List<MaterielRecords> findByCode(String code);
 }

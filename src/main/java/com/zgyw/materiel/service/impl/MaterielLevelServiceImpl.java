@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.*;
 import java.util.function.Function;
@@ -204,5 +206,75 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
         }
         repository.saveAll(materielLevels);
         recordsRepository.saveAll(materielRecords);
+    }
+
+    @Override
+    public MaterielLevel detail(Integer id) {
+        return repository.findById(id).orElse(null);
+    }
+
+    @Override
+    public MaterielLevel modify(MaterielLevelForm form, MultipartFile file) {
+        MaterielLevel materielLevel = repository.findByCode(form.getCode());
+        List<MaterielRecords> materielRecordsList = recordsRepository.findByCode(form.getCode());
+        try {
+            if (file != null) {
+                String suffix = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+                String fileName = form.getCode() + suffix;
+                if (StringUtils.isNotEmpty(materielLevel.getPhoto())) {
+                    fileSystemService.deleteFile(materielLevel.getPhoto());
+                }
+                InputStream inputStream = file.getInputStream();
+                String photo = fileSystemService.uploadFile("/materiel" + fileName, inputStream);
+                if (StringUtils.isNotEmpty(photo)) {
+                    materielLevel.setPhoto(photo);
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new MTException(ResultEnum.FAIL);
+        }
+        BeanUtils.copyProperties(form,materielLevel);
+        Map<Integer, Classify> classifyMap = classifyService.getClassify();
+        Classify classify = classifyMap.get(form.getClassifyId());
+        List<MaterielRecords> list = new ArrayList<>();
+        for (MaterielRecords materielRecords : materielRecordsList) {
+            materielRecords.setName(classify.getName());
+            materielRecords.setModel(form.getModel());
+            materielRecords.setPotting(form.getPotting());
+            materielRecords.setBrand(form.getBrand());
+            materielRecords.setPrice(form.getPrice());
+            materielRecords.setQuantity(form.getQuantity());
+            list.add(materielRecords);
+        }
+        recordsRepository.saveAll(list);
+        return repository.save(materielLevel);
+    }
+
+    @Override
+    public byte[] getPhoto(Integer id, HttpServletResponse response) {
+        MaterielLevel materielLevel = repository.findById(id).orElse(null);
+        byte[] bytes = new byte[0];
+        try {
+            File file = fileSystemService.downloadFile(materielLevel.getPhoto());
+            FileInputStream inputStream = new FileInputStream(file);
+            bytes = new byte[inputStream.available()];
+            inputStream.read(bytes,0,inputStream.available());
+            inputStream.close();
+            file.delete();
+        } catch (Exception e) {
+            log.error(getClass().getName(),e);
+            throw new MTException(ResultEnum.FAIL);
+        }
+        return bytes;
+    }
+
+    @Override
+    @Transactional
+    public void delete(String code) {
+        List<MaterielRecords> recordsList = recordsRepository.findByCode(code);
+        MaterielLevel materielLevel = repository.findByCode(code);
+        recordsRepository.deleteInBatch(recordsList);
+        repository.delete(materielLevel);
     }
 }
