@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    username: root
+    password: Zgyw_888888
+    url: jdbc:mysql://192.168.101.127:3306/materiel?characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+server:
+  port: 8088
