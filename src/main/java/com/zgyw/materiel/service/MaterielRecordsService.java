@@ -1,12 +1,14 @@
 package com.zgyw.materiel.service;
 
 import com.zgyw.materiel.bean.MaterielRecords;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface MaterielRecordsService {
 
     List<MaterielRecords> putInOrder (Integer orderId,String materielIds,Integer type);
 
-    List<MaterielRecords> findCurOrder(Integer orderId);
+    Map<String,Object> findCurOrder(Integer orderId, String content, Pageable pageable);
 }

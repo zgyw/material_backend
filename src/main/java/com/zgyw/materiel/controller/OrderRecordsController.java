@@ -44,4 +44,16 @@ public class OrderRecordsController {
         OrderRecords result = service.saveOrder(name, remarks, type);
         return ResultVO.success(result);
     }
+
+    @GetMapping("/orderRecords/detail")
+    public ResultVO detail(@RequestParam(name = "id")Integer id) {
+        OrderRecords result = service.detail(id);
+        return ResultVO.success(result);
+    }
+
+    @GetMapping("/orderRecords/delete")
+    public ResultVO delete(@RequestParam(name = "id")Integer id) {
+        service.delete(id);
+        return ResultVO.success();
+    }
 }

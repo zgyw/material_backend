@@ -1,11 +1,14 @@
 package com.zgyw.materiel.service.impl;
 
+import com.zgyw.materiel.bean.MaterielRecords;
 import com.zgyw.materiel.bean.OrderRecords;
+import com.zgyw.materiel.repository.MaterielRecordsRepository;
 import com.zgyw.materiel.repository.OrderRecordsRepository;
 import com.zgyw.materiel.service.OrderRecordsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +18,8 @@ import java.util.Map;
 public class OrderRecordsServiceImpl implements OrderRecordsService {
     @Autowired
     private OrderRecordsRepository repository;
+    @Autowired
+    private MaterielRecordsRepository recordsRepository;
 
     @Override
     public List<OrderRecords> findByType(Integer type) {
@@ -39,5 +44,18 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
         orderRecords.setType(type);
         orderRecords.setStatus(0);
         return repository.save(orderRecords);
+    }
+
+    @Override
+    public OrderRecords detail(Integer id) {
+        return repository.findById(id).orElse(null);
+    }
+
+    @Override
+    @Transactional
+    public void delete(Integer id) {
+        List<MaterielRecords> list = recordsRepository.findByOrderId(id);
+        recordsRepository.deleteInBatch(list);
+        repository.deleteById(id);
     }
 }

@@ -3,18 +3,17 @@ package com.zgyw.materiel.service.impl;
 import com.zgyw.materiel.bean.Classify;
 import com.zgyw.materiel.bean.MaterielLevel;
 import com.zgyw.materiel.bean.MaterielRecords;
+import com.zgyw.materiel.bean.OrderRecords;
 import com.zgyw.materiel.repository.MaterielLevelRepository;
 import com.zgyw.materiel.repository.MaterielRecordsRepository;
 import com.zgyw.materiel.service.ClassifyService;
 import com.zgyw.materiel.service.MaterielRecordsService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,7 +55,12 @@ public class MaterielRecordsServiceImpl implements MaterielRecordsService {
     }
 
     @Override
-    public List<MaterielRecords> findCurOrder(Integer orderId) {
-        return repository.findByOrderId(orderId);
+    public Map<String,Object> findCurOrder(Integer orderId, String content, Pageable pageable) {
+        Map<String, Object> map = new HashMap<>();
+        List<MaterielRecords> materielRecords = repository.findByCodeAndOrderIdOrModelAndOrderIdOrPottingAndOrderId(content, orderId, content, orderId, content, orderId, pageable).getContent();
+        Integer total = repository.countByCodeAndOrderIdOrModelAndOrderIdOrPottingAndOrderId(content, orderId, content, orderId, content, orderId);
+        map.put("materielRecords",materielRecords);
+        map.put("total",total);
+        return map;
     }
 }

@@ -13,4 +13,8 @@ public interface OrderRecordsService {
     Map<String,Object> pageList(Integer type, Integer status, String content, Pageable pageable);
 
     OrderRecords saveOrder(String name,String remarks,Integer type);
+
+    OrderRecords detail(Integer id);
+
+    void delete(Integer id);
 }
