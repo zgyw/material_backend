@@ -4,22 +4,15 @@ package com.zgyw.materiel.bean;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.util.Date;
 
 @Entity
-@Table(name = "t_classify")
+@Table(name = "t_group")
 @Data
-public class Classify {
+public class TGroup {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     private String name;
-
-    private String remarks;
-
-    private Integer groupId;
-
-    private Date createTime;
 }

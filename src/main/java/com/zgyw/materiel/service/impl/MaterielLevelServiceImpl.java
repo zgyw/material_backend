@@ -56,7 +56,7 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
         Map<String,Object> map = new HashMap<>();
         List<MaterielLevel> materielLevels;
         Integer total;
-        Map<Integer, Classify> classifyMap = classifyService.getClassify();
+        Map<Integer, Classify> classifyMap = classifyService.getClassifyIK();
         if (classifyId != null) {
             materielLevels = repository.findByClassifyIdAndCodeOrClassifyIdAndModelOrClassifyIdAndPotting(classifyId, content, classifyId, content, classifyId, content, pageable).getContent();
             total = repository.countByClassifyIdAndCodeOrClassifyIdAndModelOrClassifyIdAndPotting(classifyId,content,classifyId,content,classifyId,content);
@@ -123,42 +123,12 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
     }
 
     @Override
+    @Transactional
     public void importMateriel(MultipartFile file) {
-        List<String> firstRow = ImportUtil.getFirstRowContent(file);
-        List<List<Object>> dataList = ExportUtil.read(file);
-        if (dataList.size() == 0) {
-            throw new MTException(ResultEnum.FILE_EMPTY);
-        }
-        if (firstRow.size() == 0 || !"物料编码".equals(firstRow.get(0)) || firstRow.size() != 10) {
-            throw new MTException(ResultEnum.FILE_ERROR);
-        }
-        List<Classify> classifyList = classifyRepository.findAll();
-        Map<String, Classify> classifyMap =
-                classifyList.stream().collect(Collectors.toMap(new Function<Classify, String>() {
-                    @Override
-                    public String apply(Classify classify) {
-                        return classify.getName();
-                    }
-                }, Function.identity(), (key1, key2) -> key1));
-        List<MaterielLevel> materielLevelList = repository.findAll();
-        Map<String, MaterielLevel> materielLevelMap =
-                materielLevelList.stream().collect(Collectors.toMap(new Function<MaterielLevel, String>() {
-                    @Override
-                    public String apply(MaterielLevel materielLevel) {
-                        return materielLevel.getCode();
-                    }
-                }, Function.identity(), (key1, key2) -> key1));
-        // 导入的文件相当于新增一个订单
-        OrderRecords records = new OrderRecords();
-        records.setName(file.getOriginalFilename()+new Date());
-        records.setRemarks("导入入库订单"+new Date());
-        records.setInTime(new Date());
-        records.setStatus(1);
-        records.setType(1);
-        OrderRecords save = orderRecordsRepository.save(records);
-
+        List<List<Object>> dataList = ImportUtil.checkFile(file, "物料编码", 10);
+        Map<String, Classify> classifyMap = classifyService.getClassifySK();
+        Map<String, MaterielLevel> materielLevelMap = getMateriel();
         List<MaterielLevel> materielLevels = new ArrayList<>();
-        List<MaterielRecords> materielRecords = new ArrayList<>();
         for (int i = 0; i < dataList.size(); i++) {
             String code = (String)dataList.get(i).get(0);
             String classifyName = (String)dataList.get(i).get(1);
@@ -171,41 +141,44 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
             String price = (String)dataList.get(i).get(8);
             String remarks = (String)dataList.get(i).get(9);
             if (StringUtils.isEmpty(code)) {
-                throw new MTException("物料编码不能为空!",900);
+                throw new MTException("物料编码不能为空!出现在第"+(i+2)+"行",900);
             }
             if (StringUtils.isEmpty(classifyName)) {
-                throw new MTException("分类不能为空!",900);
+                throw new MTException("分类不能为空!出现在第"+(i+2)+"行",900);
             }
             if (StringUtils.isEmpty(potting)) {
-                throw new MTException("封装不能为空!",900);
+                throw new MTException("封装不能为空!出现在第"+(i+2)+"行",900);
             }
             if (StringUtils.isEmpty(quantity)) {
-                throw new MTException("数量不能为空!",900);
+                throw new MTException("数量不能为空!出现在第"+(i+2)+"行",900);
             }
             if (StringUtils.isEmpty(model)) {
-                throw new MTException("型号不能为空!",900);
+                throw new MTException("型号不能为空!出现在第"+(i+2)+"行",900);
             }
             Classify classify = classifyMap.get(classifyName);
             if (classify == null) {
-                throw new MTException("分类系统中还不存在!",900);
+                throw new MTException("分类系统中还不存在!出现在第"+(i+2)+"行",900);
             }
             //如果编码存在代表数量累加
             MaterielLevel level = materielLevelMap.get(code);
             if (level == null) {
                 MaterielLevel materielLevel = new MaterielLevel(code,model,potting,Integer.parseInt(quantity),StringUtils.isEmpty(price)?null:Double.valueOf(price),brand,supplier,website,remarks,classify.getId());
                 materielLevels.add(materielLevel);
-                MaterielRecords materielRecord = new MaterielRecords(code,classifyName,model,potting,brand,StringUtils.isEmpty(price)?null:Double.valueOf(price),Integer.parseInt(quantity),0,Integer.parseInt(quantity),1,save.getId());
-                materielRecords.add(materielRecord);
             } else {
                 Integer totalQuantity = Integer.parseInt(quantity)+level.getQuantity();
                 level.setQuantity(totalQuantity);
                 materielLevels.add(level);
-                MaterielRecords materielRecord = new MaterielRecords(code,classifyName,model,potting,brand,StringUtils.isEmpty(price)?null:Double.valueOf(price),Integer.parseInt(quantity),0,totalQuantity,1,save.getId());
-                materielRecords.add(materielRecord);
             }
         }
+        // 导入的文件相当于创建一个入库订单
+        OrderRecords records = new OrderRecords();
+        records.setName(file.getOriginalFilename()+new Date());
+        records.setRemarks("导入入库订单"+new Date());
+        records.setInTime(new Date());
+        records.setStatus(1);
+        records.setType(1);
+        orderRecordsRepository.save(records);
         repository.saveAll(materielLevels);
-        recordsRepository.saveAll(materielRecords);
     }
 
     @Override
@@ -214,6 +187,7 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
     }
 
     @Override
+    @Transactional
     public MaterielLevel modify(MaterielLevelForm form, MultipartFile file) {
         MaterielLevel materielLevel = repository.findByCode(form.getCode());
         List<MaterielRecords> materielRecordsList = recordsRepository.findByCode(form.getCode());
@@ -235,7 +209,7 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
             throw new MTException(ResultEnum.FAIL);
         }
         BeanUtils.copyProperties(form,materielLevel);
-        Map<Integer, Classify> classifyMap = classifyService.getClassify();
+        Map<Integer, Classify> classifyMap = classifyService.getClassifyIK();
         Classify classify = classifyMap.get(form.getClassifyId());
         List<MaterielRecords> list = new ArrayList<>();
         for (MaterielRecords materielRecords : materielRecordsList) {
@@ -276,5 +250,18 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
         MaterielLevel materielLevel = repository.findByCode(code);
         recordsRepository.deleteInBatch(recordsList);
         repository.delete(materielLevel);
+    }
+
+    @Override
+    public Map<String, MaterielLevel> getMateriel() {
+        List<MaterielLevel> list = repository.findAll();
+        Map<String, MaterielLevel> materielMap =
+                list.stream().collect(Collectors.toMap(new Function<MaterielLevel, String>() {
+                    @Override
+                    public String apply(MaterielLevel materielLevel) {
+                        return materielLevel.getCode();
+                    }
+                }, Function.identity(), (key1, key2) -> key1));
+        return materielMap;
     }
 }

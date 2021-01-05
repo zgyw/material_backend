@@ -13,6 +13,7 @@ public enum  ResultEnum implements CodeEnum {
     EXCEL_ERROR(6,"解析文件格式有误!"),
     FILE_EMPTY(7,"导入文件为空!"),
     FILE_ERROR(8,"请使用正确模板!"),
+    NAME_EXIST(9,"名称已存在"),
     FAIL(500,"服务器开小差!")
     ;
 

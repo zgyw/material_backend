@@ -2,7 +2,6 @@ package com.zgyw.materiel.service;
 
 import com.zgyw.materiel.bean.MaterielLevel;
 import com.zgyw.materiel.form.MaterielLevelForm;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,4 +25,6 @@ public interface MaterielLevelService {
     byte[] getPhoto(Integer id,HttpServletResponse response);
 
     void delete(String code);
+
+    Map<String, MaterielLevel> getMateriel();
 }

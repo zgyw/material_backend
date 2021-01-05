@@ -9,5 +9,15 @@ public interface ClassifyService {
 
     List<Classify> findAll ();
 
-    Map<Integer, Classify> getClassify();
+    Map<Integer, Classify> getClassifyIK();
+
+    Map<String, Classify> getClassifySK();
+
+    Classify add(Classify classify);
+
+    Classify modify(Classify classify);
+
+    Classify detail(Integer id);
+
+    void delete(Integer id);
 }

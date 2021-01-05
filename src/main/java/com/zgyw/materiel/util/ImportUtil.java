@@ -185,4 +185,22 @@ public class ImportUtil {
         }
         return firstRowList;
     }
+
+    /**
+     * 检测文件是否合法
+     * @param file 文件
+     * @param content 第一个单元格内容
+     * @param colNum 文件列数
+     */
+    public static List<List<Object>> checkFile (MultipartFile file,String content,Integer colNum) {
+        List<List<Object>> dataList = ExportUtil.read(file);
+        List<String> firstRow = ImportUtil.getFirstRowContent(file);
+        if (dataList.size() == 0) {
+            throw new MTException(ResultEnum.FILE_EMPTY);
+        }
+        if (firstRow.size() == 0 || !content.equals(firstRow.get(0)) || firstRow.size() != colNum) {
+            throw new MTException(ResultEnum.FILE_ERROR);
+        }
+        return dataList;
+    }
 }
