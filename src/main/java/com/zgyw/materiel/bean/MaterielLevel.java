@@ -61,4 +61,15 @@ public class MaterielLevel {
         this.remarks = remarks;
         this.classifyId = classifyId;
     }
+
+    public MaterielLevel(String code, String model, String potting, Integer quantity, Double price, String brand, String remarks, Integer classifyId) {
+        this.code = code;
+        this.model = model;
+        this.potting = potting;
+        this.quantity = quantity;
+        this.price = price;
+        this.brand = brand;
+        this.remarks = remarks;
+        this.classifyId = classifyId;
+    }
 }

@@ -4,7 +4,6 @@ import com.zgyw.materiel.bean.Classify;
 import com.zgyw.materiel.bean.MaterielLevel;
 import com.zgyw.materiel.bean.MaterielRecords;
 import com.zgyw.materiel.bean.OrderRecords;
-import com.zgyw.materiel.enums.ResultEnum;
 import com.zgyw.materiel.exception.MTException;
 import com.zgyw.materiel.form.OrderRecordsForm;
 import com.zgyw.materiel.repository.MaterielLevelRepository;
@@ -15,6 +14,7 @@ import com.zgyw.materiel.service.MaterielLevelService;
 import com.zgyw.materiel.service.OrderRecordsService;
 import com.zgyw.materiel.util.ExportUtil;
 import com.zgyw.materiel.util.ImportUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.BeanUtils;
@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.util.*;
 
 @Service
+@Slf4j
 public class OrderRecordsServiceImpl implements OrderRecordsService {
     @Autowired
     private OrderRecordsRepository repository;
@@ -38,8 +39,6 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
     private ClassifyService classifyService;
     @Autowired
     private MaterielLevelService levelService;
-    @Autowired
-    private OrderRecordsRepository orderRecordsRepository;
     @Autowired
     private MaterielLevelRepository levelRepository;
 
@@ -96,6 +95,7 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
     }
 
     @Override
+    @Transactional
     public void importMateriel(MultipartFile file) {
         List<List<Object>> dataList = ImportUtil.checkFile(file, "商品编码", 7);
         Map<String, Classify> classifyMap = classifyService.getClassifySK();
@@ -109,49 +109,49 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
         records.setRemarks("导入出库订单"+new Date());
         records.setStatus(0);
         records.setType(2);
-        OrderRecords save = orderRecordsRepository.save(records);
+        OrderRecords save = repository.save(records);
         int num = -1;
         for (int i = 0; i < dataList.size(); i++) {
             String code = (String)dataList.get(i).get(0);
             if (StringUtils.isEmpty(code)) {
-                orderRecordsRepository.deleteById(save.getId());
+                repository.deleteById(save.getId());
                 throw new MTException("物料编码不能为空!出现在第"+(i+2)+"行",900);
             }
             if (codeList.contains(code)) {
-                orderRecordsRepository.deleteById(save.getId());
+                repository.deleteById(save.getId());
                 throw new MTException("相同编码请合并在一起!出现在第"+(i+2)+"行",900);
             }
             codeList.add(code);
             String classifyName = (String)dataList.get(i).get(1);
             if (StringUtils.isEmpty(classifyName)) {
-                orderRecordsRepository.deleteById(save.getId());
+                repository.deleteById(save.getId());
                 throw new MTException("分类不能为空!出现在第"+(i+2)+"行",900);
             }
             Classify classify = classifyMap.get(classifyName);
             if (classify == null) {
-                orderRecordsRepository.deleteById(save.getId());
+                repository.deleteById(save.getId());
                 throw new MTException("分类系统中还不存在!出现在第"+(i+2)+"行",900);
             }
             String model = (String)dataList.get(i).get(2);
             if (StringUtils.isEmpty(model)) {
-                orderRecordsRepository.deleteById(save.getId());
+                repository.deleteById(save.getId());
                 throw new MTException("型号不能为空!出现在第"+(i+2)+"行",900);
             }
             String potting = (String)dataList.get(i).get(3);
             if (StringUtils.isEmpty(potting)) {
-                orderRecordsRepository.deleteById(save.getId());
+                repository.deleteById(save.getId());
                 throw new MTException("封装不能为空!出现在第"+(i+2)+"行",900);
             }
             String brand = (String)dataList.get(i).get(4);
             String price = (String)dataList.get(i).get(5);
             String outNum = (String)dataList.get(i).get(6);
             if (StringUtils.isEmpty(outNum)) {
-                orderRecordsRepository.deleteById(save.getId());
+                repository.deleteById(save.getId());
                 throw new MTException("出库数量不能为空!出现在第"+(i+2)+"行",900);
             }
             MaterielLevel level = materielMap.get(code);
             if (level == null) {
-                orderRecordsRepository.deleteById(save.getId());
+                repository.deleteById(save.getId());
                 throw new MTException("库存里没有物料"+code+"!出现在第"+(i+2)+"行",900);
             }
             int totalQ = level.getQuantity() - Integer.parseInt(outNum);
@@ -173,7 +173,7 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
         } else {
             save.setType(1);
             save.setOutTime(new Date());
-            orderRecordsRepository.save(save);
+            repository.save(save);
             levelRepository.saveAll(levelList);
         }
     }
@@ -181,12 +181,80 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
     @Override
     @Transactional
     public List<MaterielLevel> putInWare(Integer orderId) {
-        return null;
+        OrderRecords order = repository.findById(orderId).orElse(null);
+        List<MaterielRecords> materielRecords = recordsRepository.findByOrderId(orderId);
+        Map<String, Integer> mapList = new HashMap();
+        Map<String, MaterielRecords> mapList2 = new HashMap<>();
+        // 相同商品编码的入库数量先统计一起
+        for (MaterielRecords materielRecord : materielRecords) {
+            String code = materielRecord.getCode();
+            Integer inNum = materielRecord.getInNum();
+            Integer totalN = inNum;
+            if (mapList.containsKey(code)) {
+                Integer num = mapList.get(code);
+                totalN = totalN+num;
+            }
+            mapList.put(code,totalN);
+            mapList2.put(code,materielRecord);
+        }
+        Map<String, MaterielLevel> levelMap = levelService.getMateriel();
+        Map<String, Classify> classifySK = classifyService.getClassifySK();
+        List<MaterielLevel> levelList = new ArrayList<>();
+        for (String code : mapList.keySet()) {
+            MaterielLevel level = levelMap.get(code);
+            if (level != null) {
+                int totalQ = level.getQuantity()+mapList.get(code);
+                level.setQuantity(totalQ);
+            } else {
+                MaterielRecords result = mapList2.get(code);
+                Classify classify = classifySK.get(result.getName());
+                level = new MaterielLevel(code,result.getModel(),result.getPotting(),mapList.get(code),result.getPrice(),result.getBrand(),"物料第一次进库存",classify == null?null:classify.getId());
+            }
+            levelList.add(level);
+        }
+        order.setInTime(new Date());
+        order.setStatus(1);
+        repository.save(order);
+        return levelRepository.saveAll(levelList);
     }
 
     @Override
     @Transactional
     public List<MaterielLevel> checkOutWare(Integer orderId) {
-        return null;
+        OrderRecords order = repository.findById(orderId).orElse(null);
+        List<MaterielRecords> materielRecords = recordsRepository.findByOrderId(orderId);
+        Map<String, Integer> mapList = new HashMap();
+        // 相同商品编码的出库数量先统计一起
+        for (MaterielRecords materielRecord : materielRecords) {
+            Integer inNum = materielRecord.getInNum();
+            String code = materielRecord.getCode();
+            Integer totalN = inNum;
+            if (mapList.containsKey(code)) {
+                Integer num = mapList.get(code);
+                totalN = totalN+num;
+            }
+            mapList.put(code,totalN);
+        }
+        Map<String, MaterielLevel> levelMap = levelService.getMateriel();
+        List<MaterielLevel> levelList = new ArrayList<>();
+        for (String code : mapList.keySet()) {
+            MaterielLevel level = levelMap.get(code);
+            if (level != null) {
+                int totalQ = level.getQuantity()-mapList.get(code);
+                if (totalQ < 0) {
+                    log.error("库存不足");
+                    throw new MTException("物料"+code+"库存不足!",900);
+                }
+                level.setQuantity(totalQ);
+            } else {
+                log.error("库存中不存在这个物料");
+                throw new MTException("库存里没有物料"+code+"!",900);
+            }
+            levelList.add(level);
+        }
+        order.setOutTime(new Date());
+        order.setStatus(1);
+        repository.save(order);
+        return levelRepository.saveAll(levelList);
     }
 }

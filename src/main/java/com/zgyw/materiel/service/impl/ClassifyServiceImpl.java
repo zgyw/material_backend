@@ -78,6 +78,7 @@ public class ClassifyServiceImpl implements ClassifyService {
     }
 
     @Override
+    @Transactional
     public void delete(Integer id) {
         repository.deleteById(id);
     }
