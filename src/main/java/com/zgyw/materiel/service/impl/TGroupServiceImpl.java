@@ -54,6 +54,8 @@ public class TGroupServiceImpl implements TGroupService {
     @Override
     @Transactional
     public void delete(Integer id) {
+        List<Classify> list = classifyRepository.findByGroupId(id);
+        classifyRepository.deleteInBatch(list);
         repository.deleteById(id);
     }
 
