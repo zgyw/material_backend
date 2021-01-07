@@ -35,8 +35,13 @@ public class MaterielLevelForm {
     private String website;
 
     /** 价格 */
-    private Double price;
+    private String price;
 
     /** 备注 */
     private String remarks;
+
+    /** 厂家型号 */
+    private String factoryModel;
+
+
 }

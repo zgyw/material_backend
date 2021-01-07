@@ -57,13 +57,15 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
         List<MaterielLevel> materielLevels;
         Integer total;
         Map<Integer, Classify> classifyMap = classifyService.getClassifyIK();
+        List<Integer> classifyIds = new ArrayList<>();
         if (classifyId != null) {
-            materielLevels = repository.findByClassifyIdAndCodeOrClassifyIdAndModelOrClassifyIdAndPotting(classifyId, content, classifyId, content, classifyId, content, pageable).getContent();
-            total = repository.countByClassifyIdAndCodeOrClassifyIdAndModelOrClassifyIdAndPotting(classifyId,content,classifyId,content,classifyId,content);
+            classifyIds.add(classifyId);
         } else {
-            materielLevels = repository.findByCodeOrModelOrPotting(content,content,content,pageable).getContent();
-            total = repository.countByCodeOrModelOrPotting(content,content,content);
+            List<Classify> classifyList = classifyRepository.findAll();
+            classifyIds = classifyList.stream().map(e -> e.getId()).collect(Collectors.toList());
         }
+        materielLevels = repository.findByClassifyIdInAndCodeContainingOrClassifyIdInAndModelContainingOrClassifyIdInAndPottingContaining(classifyIds, content, classifyIds, content, classifyIds, content, pageable).getContent();
+        total = repository.countByClassifyIdInAndCodeContainingOrClassifyIdInAndModelContainingOrClassifyIdInAndPottingContaining(classifyIds,content,classifyIds,content,classifyIds,content);
         List<MaterielLevelVO> voList = new ArrayList<>();
         for (MaterielLevel materielLevel : materielLevels) {
             MaterielLevelVO levelVO = new MaterielLevelVO();
@@ -133,27 +135,22 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
             String code = (String)dataList.get(i).get(0);
             String classifyName = (String)dataList.get(i).get(1);
             String potting = (String)dataList.get(i).get(2);
-            String quantity = (String)dataList.get(i).get(3);
-            String model = (String)dataList.get(i).get(4);
-            String brand = (String)dataList.get(i).get(5);
-            String supplier = (String)dataList.get(i).get(6);
-            String website = (String)dataList.get(i).get(7);
-            String price = (String)dataList.get(i).get(8);
-            String remarks = (String)dataList.get(i).get(9);
+            String factoryModel = (String)dataList.get(i).get(3);
+            String quantity = (String)dataList.get(i).get(4);
+            String model = (String)dataList.get(i).get(5);
+            String brand = (String)dataList.get(i).get(6);
+            String supplier = (String)dataList.get(i).get(7);
+            String website = (String)dataList.get(i).get(8);
+            String price = (String)dataList.get(i).get(9);
+            String remarks = (String)dataList.get(i).get(10);
             if (StringUtils.isEmpty(code)) {
                 throw new MTException("物料编码不能为空!出现在第"+(i+2)+"行",900);
             }
             if (StringUtils.isEmpty(classifyName)) {
                 throw new MTException("分类不能为空!出现在第"+(i+2)+"行",900);
             }
-            if (StringUtils.isEmpty(potting)) {
-                throw new MTException("封装不能为空!出现在第"+(i+2)+"行",900);
-            }
             if (StringUtils.isEmpty(quantity)) {
                 throw new MTException("数量不能为空!出现在第"+(i+2)+"行",900);
-            }
-            if (StringUtils.isEmpty(model)) {
-                throw new MTException("型号不能为空!出现在第"+(i+2)+"行",900);
             }
             Classify classify = classifyMap.get(classifyName);
             if (classify == null) {
@@ -162,7 +159,7 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
             //如果编码存在代表数量累加
             MaterielLevel level = materielLevelMap.get(code);
             if (level == null) {
-                MaterielLevel materielLevel = new MaterielLevel(code,model,potting,Integer.parseInt(quantity),StringUtils.isEmpty(price)?null:Double.valueOf(price),brand,supplier,website,remarks,classify.getId());
+                MaterielLevel materielLevel = new MaterielLevel(code,model,potting,Integer.parseInt(quantity),price,brand,supplier,website,remarks,classify.getId(),factoryModel);
                 materielLevels.add(materielLevel);
             } else {
                 Integer totalQuantity = Integer.parseInt(quantity)+level.getQuantity();

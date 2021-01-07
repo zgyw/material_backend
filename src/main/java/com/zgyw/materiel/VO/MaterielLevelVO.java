@@ -23,7 +23,7 @@ public class MaterielLevelVO {
     private String brand;
 
     /** 价格 */
-    private Double price;
+    private String price;
 
     /** 库存数量 */
     private Integer quantity;
@@ -36,4 +36,7 @@ public class MaterielLevelVO {
 
     /** 备注 */
     private String remarks;
+
+    /** 厂家型号 */
+    private String factoryModel;
 }

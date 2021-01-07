@@ -9,11 +9,8 @@ import java.util.List;
 
 public interface MaterielLevelRepository extends JpaRepository<MaterielLevel,Integer> {
 
-    Page<MaterielLevel> findByClassifyIdAndCodeOrClassifyIdAndModelOrClassifyIdAndPotting(Integer classifyId1, String code, Integer classifyId2, String model, Integer classifyId3, String potting, Pageable pageable);
-    Integer countByClassifyIdAndCodeOrClassifyIdAndModelOrClassifyIdAndPotting(Integer classifyId1,String code,Integer classifyId2,String model,Integer classifyId3,String potting);
-
-    Page<MaterielLevel> findByCodeOrModelOrPotting(String code,String model,String potting,Pageable pageable);
-    Integer countByCodeOrModelOrPotting(String code,String model,String potting);
+    Page<MaterielLevel> findByClassifyIdInAndCodeContainingOrClassifyIdInAndModelContainingOrClassifyIdInAndPottingContaining(List<Integer> classifyId1, String code, List<Integer> classifyId2, String model, List<Integer> classifyId3, String potting, Pageable pageable);
+    Integer countByClassifyIdInAndCodeContainingOrClassifyIdInAndModelContainingOrClassifyIdInAndPottingContaining(List<Integer> classifyId1,String code,List<Integer> classifyId2,String model,List<Integer> classifyId3,String potting);
 
     MaterielLevel findByCode(String code);
 

@@ -133,18 +133,11 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
                 throw new MTException("分类系统中还不存在!出现在第"+(i+2)+"行",900);
             }
             String model = (String)dataList.get(i).get(2);
-            if (StringUtils.isEmpty(model)) {
-                repository.deleteById(save.getId());
-                throw new MTException("型号不能为空!出现在第"+(i+2)+"行",900);
-            }
             String potting = (String)dataList.get(i).get(3);
-            if (StringUtils.isEmpty(potting)) {
-                repository.deleteById(save.getId());
-                throw new MTException("封装不能为空!出现在第"+(i+2)+"行",900);
-            }
             String brand = (String)dataList.get(i).get(4);
             String price = (String)dataList.get(i).get(5);
             String outNum = (String)dataList.get(i).get(6);
+            String factoryModel = (String)dataList.get(i).get(7);
             if (StringUtils.isEmpty(outNum)) {
                 repository.deleteById(save.getId());
                 throw new MTException("出库数量不能为空!出现在第"+(i+2)+"行",900);
@@ -157,7 +150,7 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
             int totalQ = level.getQuantity() - Integer.parseInt(outNum);
             MaterielRecords materielRecord = null;
             if (totalQ < 0) {
-                materielRecord = new MaterielRecords(code,classifyName,model,potting,brand,StringUtils.isEmpty(price)?null:Double.valueOf(price),0,level.getQuantity(),totalQ,2,save.getId());
+                materielRecord = new MaterielRecords(code,classifyName,model,potting,brand,price,0,level.getQuantity(),totalQ,2,factoryModel,save.getId());
                 recordsList.add(materielRecord);
                 num = i;
                 continue;
@@ -208,7 +201,7 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
             } else {
                 MaterielRecords result = mapList2.get(code);
                 Classify classify = classifySK.get(result.getName());
-                level = new MaterielLevel(code,result.getModel(),result.getPotting(),mapList.get(code),result.getPrice(),result.getBrand(),"物料第一次进库存",classify == null?null:classify.getId());
+                level = new MaterielLevel(code,result.getModel(),result.getPotting(),mapList.get(code),result.getPrice(),result.getBrand(),"物料第一次进库存",classify == null?null:classify.getId(),result.getFactoryModel());
             }
             levelList.add(level);
         }

@@ -32,7 +32,7 @@ public class MaterielLevelController {
     public ResultVO pageList(@RequestParam(value = "page", defaultValue = "0") Integer page,
                              @RequestParam(value = "size", defaultValue = "10") Integer size,
                              @RequestParam(name = "classifyId",required = false)Integer classifyId,
-                             @RequestParam(name = "content",required = false,defaultValue = "")String content) {
+                             @RequestParam(name = "content",defaultValue = "")String content) {
         PageRequest pageRequest = PageRequest.of(page, size);
         Map<String, Object> result = service.pageList(classifyId, content, pageRequest);
         return ResultVO.success(result);

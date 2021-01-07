@@ -45,10 +45,15 @@ public class MaterielRecordsServiceImpl implements MaterielRecordsService {
                 records.setPotting(materielLevel.getPotting());
                 records.setBrand(materielLevel.getBrand());
                 records.setPrice(materielLevel.getPrice());
-                records.setInNum(materielLevel.getQuantity());
+                if (type == 1) {
+                    records.setInNum(materielLevel.getQuantity());
+                } else {
+                    records.setOutNum(materielLevel.getQuantity());
+                }
                 records.setQuantity(materielLevel.getQuantity());
                 records.setType(type);
                 records.setOrderId(orderId);
+                records.setFactoryModel(materielLevel.getFactoryModel());
                 materielRecords.add(records);
             }
             return repository.saveAll(materielRecords);

@@ -26,7 +26,7 @@ public class MaterielLevel {
     private Integer quantity;
 
     /** 价格 */
-    private Double price;
+    private String price;
 
     /** 品牌 */
     private String brand;
@@ -43,13 +43,16 @@ public class MaterielLevel {
     /** 图片 */
     private String photo;
 
+    /** 厂家型号 */
+    private String factoryModel;
+
     /** 分类id */
     private Integer classifyId;
 
     public MaterielLevel() {
     }
 
-    public MaterielLevel(String code, String model, String potting, Integer quantity, Double price, String brand, String supplier, String website, String remarks, Integer classifyId) {
+    public MaterielLevel(String code, String model, String potting, Integer quantity, String price, String brand, String supplier, String website, String remarks, Integer classifyId, String factoryModel) {
         this.code = code;
         this.model = model;
         this.potting = potting;
@@ -60,9 +63,10 @@ public class MaterielLevel {
         this.website = website;
         this.remarks = remarks;
         this.classifyId = classifyId;
+        this.factoryModel = factoryModel;
     }
 
-    public MaterielLevel(String code, String model, String potting, Integer quantity, Double price, String brand, String remarks, Integer classifyId) {
+    public MaterielLevel(String code, String model, String potting, Integer quantity, String price, String brand, String remarks, Integer classifyId, String factoryModel) {
         this.code = code;
         this.model = model;
         this.potting = potting;
@@ -71,5 +75,6 @@ public class MaterielLevel {
         this.brand = brand;
         this.remarks = remarks;
         this.classifyId = classifyId;
+        this.factoryModel = factoryModel;
     }
 }
