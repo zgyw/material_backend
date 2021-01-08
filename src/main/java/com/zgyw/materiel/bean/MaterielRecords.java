@@ -50,10 +50,13 @@ public class MaterielRecords {
     /** 订单id */
     private Integer orderId;
 
+    /** 描述(规格) */
+    private String remarks;
+
     public MaterielRecords() {
     }
 
-    public MaterielRecords(String code, String name, String model, String potting, String brand, String price, Integer inNum, Integer outNum, Integer quantity, Integer type, String factoryModel, Integer orderId) {
+    public MaterielRecords(String code, String name, String model, String potting, String brand, String price, Integer inNum, Integer outNum, Integer quantity, Integer type, String factoryModel, Integer orderId, String remarks) {
         this.code = code;
         this.name = name;
         this.model = model;
@@ -66,5 +69,6 @@ public class MaterielRecords {
         this.type = type;
         this.factoryModel = factoryModel;
         this.orderId = orderId;
+        this.remarks = remarks;
     }
 }

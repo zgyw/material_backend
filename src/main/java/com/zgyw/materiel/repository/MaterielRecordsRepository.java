@@ -13,7 +13,7 @@ public interface MaterielRecordsRepository extends JpaRepository<MaterielRecords
 
     List<MaterielRecords> findByCode(String code);
 
-    Page<MaterielRecords> findByCodeAndOrderIdOrModelAndOrderIdOrPottingAndOrderId(String code, Integer id1, String model, Integer id2, String potting, Integer id3, Pageable pageable);
+    Page<MaterielRecords> findByCodeContainingAndOrderIdOrModelContainingAndOrderIdOrPottingContainingAndOrderId(String code, Integer id1, String model, Integer id2, String potting, Integer id3, Pageable pageable);
 
-    Integer countByCodeAndOrderIdOrModelAndOrderIdOrPottingAndOrderId(String code, Integer id1, String model, Integer id2, String potting, Integer id3);
+    Integer countByCodeContainingAndOrderIdOrModelContainingAndOrderIdOrPottingContainingAndOrderId(String code, Integer id1, String model, Integer id2, String potting, Integer id3);
 }

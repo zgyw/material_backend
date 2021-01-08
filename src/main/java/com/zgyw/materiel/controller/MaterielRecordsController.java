@@ -66,5 +66,11 @@ public class MaterielRecordsController {
         return ResultVO.success(result);
     }
 
+    @PostMapping("/materielRecords/changeInNum")
+    public ResultVO changeInNum(@RequestParam(name = "materielNums") String materielNums) {
+        List<MaterielRecords> result = service.changeInNum(materielNums);
+        return ResultVO.success(result);
+    }
+
 
 }

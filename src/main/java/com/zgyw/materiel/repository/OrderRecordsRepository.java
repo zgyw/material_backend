@@ -11,8 +11,8 @@ public interface OrderRecordsRepository extends JpaRepository<OrderRecords,Integ
 
     List<OrderRecords> findByStatusAndType(Integer status,Integer type);
 
-    Page<OrderRecords> findByStatusAndTypeAndName(Integer status, Integer type, String name, Pageable pageable);
+    Page<OrderRecords> findByStatusAndTypeAndNameContaining(Integer status, Integer type, String name, Pageable pageable);
 
-    Integer countByStatusAndTypeAndName(Integer status, Integer type, String name);
+    Integer countByStatusAndTypeAndNameContaining(Integer status, Integer type, String name);
 
 }

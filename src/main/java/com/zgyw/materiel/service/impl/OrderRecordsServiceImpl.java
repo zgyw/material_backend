@@ -50,8 +50,8 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
     @Override
     public Map<String,Object> pageList(Integer type, Integer status, String content, Pageable pageable) {
         Map map = new HashMap<>();
-        List<OrderRecords> list = repository.findByStatusAndTypeAndName(status, type, content, pageable).getContent();
-        Integer total = repository.countByStatusAndTypeAndName(status, type, content);
+        List<OrderRecords> list = repository.findByStatusAndTypeAndNameContaining(status, type, content, pageable).getContent();
+        Integer total = repository.countByStatusAndTypeAndNameContaining(status, type, content);
         map.put("orderRecords",list);
         map.put("total",total);
         return map;
@@ -97,7 +97,7 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
     @Override
     @Transactional
     public void importMateriel(MultipartFile file) {
-        List<List<Object>> dataList = ImportUtil.checkFile(file, "商品编码", 7);
+        List<List<Object>> dataList = ImportUtil.checkFile(file, "商品编码", 9);
         Map<String, Classify> classifyMap = classifyService.getClassifySK();
         Map<String, MaterielLevel> materielMap = levelService.getMateriel();
         List<String> codeList = new ArrayList<>();
@@ -138,6 +138,7 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
             String price = (String)dataList.get(i).get(5);
             String outNum = (String)dataList.get(i).get(6);
             String factoryModel = (String)dataList.get(i).get(7);
+            String remarks = (String)dataList.get(i).get(8);
             if (StringUtils.isEmpty(outNum)) {
                 repository.deleteById(save.getId());
                 throw new MTException("出库数量不能为空!出现在第"+(i+2)+"行",900);
@@ -150,7 +151,7 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
             int totalQ = level.getQuantity() - Integer.parseInt(outNum);
             MaterielRecords materielRecord = null;
             if (totalQ < 0) {
-                materielRecord = new MaterielRecords(code,classifyName,model,potting,brand,price,0,level.getQuantity(),totalQ,2,factoryModel,save.getId());
+                materielRecord = new MaterielRecords(code,classifyName,model,potting,brand,price,0,level.getQuantity(),totalQ,2,factoryModel,save.getId(),remarks);
                 recordsList.add(materielRecord);
                 num = i;
                 continue;

@@ -17,4 +17,6 @@ public interface MaterielRecordsService {
     void delete(Integer id);
 
     MaterielRecords modify(MaterielRecords records);
+
+    List<MaterielRecords> changeInNum(String materielNums);
 }
