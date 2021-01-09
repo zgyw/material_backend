@@ -57,6 +57,7 @@ public class MaterielRecordsServiceImpl implements MaterielRecordsService {
                 records.setType(type);
                 records.setOrderId(orderId);
                 records.setFactoryModel(materielLevel.getFactoryModel());
+                records.setRemarks(materielLevel.getRemarks());
                 materielRecords.add(records);
             }
             return repository.saveAll(materielRecords);
@@ -101,6 +102,19 @@ public class MaterielRecordsServiceImpl implements MaterielRecordsService {
         for (RecordsForm recordsForm : recordsFormList) {
             MaterielRecords materielRecords = repository.findById(recordsForm.getId()).orElse(null);
             materielRecords.setInNum(recordsForm.getInNum());
+            recordsList.add(materielRecords);
+        }
+        return repository.saveAll(recordsList);
+    }
+
+    @Override
+    public List<MaterielRecords> changeOutNum(String materielNums) {
+        Gson gson = new Gson();
+        List<RecordsForm> recordsFormList = gson.fromJson(materielNums,new TypeToken<List<RecordsForm>>(){}.getType());
+        List<MaterielRecords> recordsList = new ArrayList<>();
+        for (RecordsForm recordsForm : recordsFormList) {
+            MaterielRecords materielRecords = repository.findById(recordsForm.getId()).orElse(null);
+            materielRecords.setOutNum(recordsForm.getOutNum());
             recordsList.add(materielRecords);
         }
         return repository.saveAll(recordsList);

@@ -11,4 +11,6 @@ public class RecordsForm {
     private String code;
 
     private Integer inNum;
+
+    private Integer outNum;
 }

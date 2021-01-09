@@ -72,5 +72,11 @@ public class MaterielRecordsController {
         return ResultVO.success(result);
     }
 
+    @PostMapping("/materielRecords/changeOutNum")
+    public ResultVO changeOutNum(@RequestParam(name = "materielNums") String materielNums) {
+        List<MaterielRecords> result = service.changeOutNum(materielNums);
+        return ResultVO.success(result);
+    }
+
 
 }

@@ -57,7 +57,7 @@ public class ClassifyController {
 
     @GetMapping("/classify/delete")
     public ResultVO delete(@RequestParam(name = "id")Integer id) {
-        Classify result = service.detail(id);
+        service.delete(id);
         return ResultVO.success();
     }
 }

@@ -19,4 +19,6 @@ public interface MaterielRecordsService {
     MaterielRecords modify(MaterielRecords records);
 
     List<MaterielRecords> changeInNum(String materielNums);
+
+    List<MaterielRecords> changeOutNum(String materielNums);
 }
