@@ -53,10 +53,16 @@ public class MaterielRecords {
     /** 描述(规格) */
     private String remarks;
 
+    /** 供应商 */
+    private String supplier;
+
+    /** 网址 */
+    private String website;
+
     public MaterielRecords() {
     }
 
-    public MaterielRecords(String code, String name, String model, String potting, String brand, String price, Integer inNum, Integer outNum, Integer quantity, Integer type, String factoryModel, Integer orderId, String remarks) {
+    public MaterielRecords(String code, String name, String model, String potting, String brand, String price, Integer inNum, Integer outNum, Integer quantity, Integer type, String factoryModel, Integer orderId, String remarks, String supplier, String website) {
         this.code = code;
         this.name = name;
         this.model = model;
@@ -70,5 +76,7 @@ public class MaterielRecords {
         this.factoryModel = factoryModel;
         this.orderId = orderId;
         this.remarks = remarks;
+        this.supplier = supplier;
+        this.website = website;
     }
 }

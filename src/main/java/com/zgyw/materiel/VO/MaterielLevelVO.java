@@ -39,4 +39,6 @@ public class MaterielLevelVO {
 
     /** 厂家型号 */
     private String factoryModel;
+
+    private String photo;
 }

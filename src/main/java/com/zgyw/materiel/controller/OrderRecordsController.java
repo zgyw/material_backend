@@ -11,6 +11,7 @@ import com.zgyw.materiel.service.OrderRecordsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +44,8 @@ public class OrderRecordsController {
                               @RequestParam(name = "content",defaultValue = "") String content,
                               @RequestParam(name = "page",defaultValue = "0") Integer page,
                               @RequestParam(name = "size",defaultValue = "10") Integer size) {
-        PageRequest pageRequest = PageRequest.of(page, size);
+        Sort sort = Sort.by(Sort.Direction.DESC,"inTime","outTime");
+        PageRequest pageRequest = PageRequest.of(page, size,sort);
         Map<String, Object> result = service.pageList(type, status, content, pageRequest);
         return ResultVO.success(result);
     }

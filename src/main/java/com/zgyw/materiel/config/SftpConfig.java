@@ -7,7 +7,7 @@ import org.springframework.context.annotation.PropertySource;
 
 @Data
 @Configuration
-@PropertySource("classpath:Sftp.properties")
+@PropertySource("classpath:sftp.properties")
 @ConfigurationProperties(prefix="sftp.client")
 public class SftpConfig {
     private String host;

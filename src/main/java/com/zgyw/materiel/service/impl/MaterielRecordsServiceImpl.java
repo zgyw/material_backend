@@ -38,7 +38,21 @@ public class MaterielRecordsServiceImpl implements MaterielRecordsService {
             List<MaterielLevel> materielLevels = levelRepository.findByIdIn(ids);
             List<MaterielRecords> materielRecords = new ArrayList<>();
             for (MaterielLevel materielLevel : materielLevels) {
-                MaterielRecords records = new MaterielRecords();
+                MaterielRecords records = repository.findByCodeAndOrderId(materielLevel.getCode(), orderId);
+                if (records == null) {
+                    records = new MaterielRecords();
+                    if (type == 1) {
+                        records.setInNum(materielLevel.getQuantity());
+                    } else {
+                        records.setOutNum(materielLevel.getQuantity());
+                    }
+                } else {
+                    if (type == 1) {
+                        records.setInNum(records.getInNum()+materielLevel.getQuantity());
+                    } else {
+                        records.setOutNum(records.getOutNum()+materielLevel.getQuantity());
+                    }
+                }
                 Classify classify = classifyMap.get(materielLevel.getClassifyId());
                 records.setCode(materielLevel.getCode());
                 if (classify != null) {
@@ -48,11 +62,6 @@ public class MaterielRecordsServiceImpl implements MaterielRecordsService {
                 records.setPotting(materielLevel.getPotting());
                 records.setBrand(materielLevel.getBrand());
                 records.setPrice(materielLevel.getPrice());
-                if (type == 1) {
-                    records.setInNum(materielLevel.getQuantity());
-                } else {
-                    records.setOutNum(materielLevel.getQuantity());
-                }
                 records.setQuantity(materielLevel.getQuantity());
                 records.setType(type);
                 records.setOrderId(orderId);

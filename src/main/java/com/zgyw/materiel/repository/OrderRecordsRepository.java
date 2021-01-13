@@ -15,4 +15,6 @@ public interface OrderRecordsRepository extends JpaRepository<OrderRecords,Integ
 
     Integer countByStatusAndTypeAndNameContaining(Integer status, Integer type, String name);
 
+    OrderRecords findByTypeAndName(Integer type,String name);
+
 }

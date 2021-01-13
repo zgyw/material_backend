@@ -1,9 +1,11 @@
 package com.zgyw.materiel.service.impl;
 
+import com.zgyw.materiel.VO.OrderRecordsVO;
 import com.zgyw.materiel.bean.Classify;
 import com.zgyw.materiel.bean.MaterielLevel;
 import com.zgyw.materiel.bean.MaterielRecords;
 import com.zgyw.materiel.bean.OrderRecords;
+import com.zgyw.materiel.enums.ResultEnum;
 import com.zgyw.materiel.exception.MTException;
 import com.zgyw.materiel.form.OrderRecordsForm;
 import com.zgyw.materiel.repository.MaterielLevelRepository;
@@ -28,6 +30,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -53,7 +57,15 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
         Map map = new HashMap<>();
         List<OrderRecords> list = repository.findByStatusAndTypeAndNameContaining(status, type, content, pageable).getContent();
         Integer total = repository.countByStatusAndTypeAndNameContaining(status, type, content);
-        map.put("orderRecords", list);
+        List<OrderRecordsVO> voList = new ArrayList<>();
+        for (OrderRecords orderRecords : list) {
+            List<MaterielRecords> recordsList = recordsRepository.findByOrderId(orderRecords.getId());
+            OrderRecordsVO orderRecordsVO = new OrderRecordsVO();
+            BeanUtils.copyProperties(orderRecords,orderRecordsVO);
+            orderRecordsVO.setMaterielRecords(recordsList);
+            voList.add(orderRecordsVO);
+        }
+        map.put("orderRecords", voList);
         map.put("total", total);
         return map;
     }
@@ -61,6 +73,10 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
     @Override
     @Transactional
     public OrderRecords saveOrder(OrderRecordsForm form) {
+        OrderRecords records = repository.findByTypeAndName(form.getType(), form.getName());
+        if (records != null) {
+            throw new MTException(ResultEnum.NAME_EXIST);
+        }
         OrderRecords orderRecords = new OrderRecords();
         BeanUtils.copyProperties(form, orderRecords);
         orderRecords.setStatus(0);
@@ -70,6 +86,10 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
     @Override
     @Transactional
     public OrderRecords modifyOrder(OrderRecordsForm form) {
+        OrderRecords records = repository.findByTypeAndName(form.getType(), form.getName());
+        if (records != null && records.getId() != form.getId()) {
+            throw new MTException(ResultEnum.NAME_EXIST);
+        }
         OrderRecords orderRecords = repository.findById(form.getId()).orElse(null);
         BeanUtils.copyProperties(form, orderRecords);
         return repository.save(orderRecords);
@@ -98,18 +118,31 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
     @Override
     public void importMateriel(MultipartFile file) {
         List<List<Object>> dataList = ImportUtil.checkFile(file, "商品编码", 9);
+        String fileName = file.getOriginalFilename().split(".")[0];
+        OrderRecords orderRecords = repository.findByTypeAndName(2, fileName);
+        if (orderRecords != null) {
+            throw new MTException(ResultEnum.NAME_EXIST);
+        }
         Map<String, Classify> classifyMap = classifyService.getClassifySK();
         Map<String, MaterielLevel> materielMap = levelService.getMateriel();
+        List<MaterielRecords> list = recordsRepository.findAll();
+        Map<String, MaterielRecords> recordsMap =
+                list.stream().collect(Collectors.toMap(new Function<MaterielRecords, String>() {
+                    @Override
+                    public String apply(MaterielRecords records) {
+                        return records.getCode();
+                    }
+                }, Function.identity(), (key1, key2) -> key1));
         List<String> codeList = new ArrayList<>();
         List<MaterielLevel> levelList = new ArrayList<>();
         // 导入文件相当于创建一个出库订单
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         OrderRecords records = new OrderRecords();
-        records.setName(sdf.format(new Date())+"出库文件订单");
-        records.setRemarks("导入出库订单" +sdf.format(new Date()));
+        records.setName(fileName);
+        records.setRemarks("导入出库订单");
         records.setStatus(0);
         records.setType(2);
         OrderRecords save = repository.save(records);
+        List<MaterielRecords> recordsList = new ArrayList<>();
         for (int i = 0; i < dataList.size(); i++) {
             String code = (String) dataList.get(i).get(0);
             if (StringUtils.isEmpty(code)) {
@@ -145,8 +178,11 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
             if (totalQ < 0) {
                 // 当有一个物料库存不足时，该订单变成未出库订单，所有物料不能出库
                 saveByError(dataList,level.getQuantity(),save.getId());
-                throw new MTException("物料库存不足!出现在第" + (i+ 2) + "行", 900);
+                throw new MTException("物料库存不足,不能出库!!!", 900);
             }
+            MaterielRecords materielRecords = recordsMap.get(code);
+            materielRecords.setQuantity(totalQ);
+            recordsList.add(materielRecords);
             level.setQuantity(totalQ);
             levelList.add(level);
         }
@@ -154,6 +190,7 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
         save.setOutTime(new Date());
         repository.save(save);
         levelRepository.saveAll(levelList);
+        recordsRepository.saveAll(recordsList);
     }
 
     @Override
@@ -161,38 +198,29 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
     public List<MaterielLevel> putInWare(Integer orderId) {
         OrderRecords order = repository.findById(orderId).orElse(null);
         List<MaterielRecords> materielRecords = recordsRepository.findByOrderId(orderId);
-        Map<String, Integer> mapList = new HashMap();
-        Map<String, MaterielRecords> mapList2 = new HashMap<>();
-        // 相同商品编码的入库数量先统计一起
-        for (MaterielRecords materielRecord : materielRecords) {
-            String code = materielRecord.getCode();
-            Integer inNum = materielRecord.getInNum();
-            Integer totalN = inNum;
-            if (mapList.containsKey(code)) {
-                Integer num = mapList.get(code);
-                totalN = totalN + num;
-            }
-            mapList.put(code, totalN);
-            mapList2.put(code, materielRecord);
-        }
         Map<String, MaterielLevel> levelMap = levelService.getMateriel();
         Map<String, Classify> classifySK = classifyService.getClassifySK();
         List<MaterielLevel> levelList = new ArrayList<>();
-        for (String code : mapList.keySet()) {
-            MaterielLevel level = levelMap.get(code);
+        List<MaterielRecords> recordsList = new ArrayList<>();
+        for (MaterielRecords materielRecord : materielRecords) {
+            MaterielLevel level = levelMap.get(materielRecord.getCode());
             if (level != null) {
-                int totalQ = level.getQuantity() + mapList.get(code);
+                int totalQ = level.getQuantity() + materielRecord.getInNum();
                 level.setQuantity(totalQ);
+                materielRecord.setQuantity(totalQ);
             } else {
-                MaterielRecords result = mapList2.get(code);
-                Classify classify = classifySK.get(result.getName());
-                level = new MaterielLevel(code, result.getModel(), result.getPotting(), mapList.get(code), result.getPrice(), result.getBrand(), "物料第一次进库存", classify == null ? null : classify.getId(), result.getFactoryModel());
+                Classify classify = classifySK.get(materielRecord.getName());
+                level =
+                new MaterielLevel(materielRecord.getCode(),materielRecord.getModel(),materielRecord.getPotting(),materielRecord.getInNum(),materielRecord.getPrice(),materielRecord.getBrand(),materielRecord.getSupplier(),materielRecord.getWebsite(),materielRecord.getRemarks(),classify == null?null:classify.getId(),materielRecord.getFactoryModel());
+                materielRecord.setQuantity(materielRecord.getInNum());
             }
             levelList.add(level);
+            recordsList.add(materielRecord);
         }
         order.setInTime(new Date());
         order.setStatus(1);
         repository.save(order);
+        recordsRepository.saveAll(recordsList);
         return levelRepository.saveAll(levelList);
     }
 
@@ -201,38 +229,30 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
     public List<MaterielLevel> checkOutWare(Integer orderId) {
         OrderRecords order = repository.findById(orderId).orElse(null);
         List<MaterielRecords> materielRecords = recordsRepository.findByOrderId(orderId);
-        Map<String, Integer> mapList = new HashMap();
-        // 相同商品编码的出库数量先统计一起
-        for (MaterielRecords materielRecord : materielRecords) {
-            Integer inNum = materielRecord.getOutNum();
-            String code = materielRecord.getCode();
-            Integer totalN = inNum;
-            if (mapList.containsKey(code)) {
-                Integer num = mapList.get(code);
-                totalN = totalN + num;
-            }
-            mapList.put(code, totalN);
-        }
         Map<String, MaterielLevel> levelMap = levelService.getMateriel();
+        List<MaterielRecords> recordsList = new ArrayList<>();
         List<MaterielLevel> levelList = new ArrayList<>();
-        for (String code : mapList.keySet()) {
-            MaterielLevel level = levelMap.get(code);
+        for (MaterielRecords materielRecord : materielRecords) {
+            MaterielLevel level = levelMap.get(materielRecord.getCode());
             if (level != null) {
-                int totalQ = level.getQuantity() - mapList.get(code);
+                int totalQ = level.getQuantity() - materielRecord.getOutNum();
                 if (totalQ < 0) {
                     log.error("库存不足");
-                    throw new MTException("物料" + code + "库存不足!", 900);
+                    throw new MTException("物料库存不足,不予出库!!!", 900);
                 }
                 level.setQuantity(totalQ);
+                materielRecord.setQuantity(totalQ);
+                recordsList.add(materielRecord);
             } else {
                 log.error("库存中不存在这个物料");
-                throw new MTException("库存里没有物料" + code + "!", 900);
+                throw new MTException("库存里没有物料" + materielRecord.getCode() + "!", 901);
             }
             levelList.add(level);
         }
         order.setOutTime(new Date());
         order.setStatus(1);
         repository.save(order);
+        recordsRepository.saveAll(recordsList);
         return levelRepository.saveAll(levelList);
     }
 
@@ -248,7 +268,7 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
             String outNum = (String) dataList.get(i).get(6);
             String factoryModel = (String) dataList.get(i).get(7);
             String remarks = (String) dataList.get(i).get(8);
-            MaterielRecords materielRecord = new MaterielRecords(code, classifyName, model, potting, brand, price, 0,Integer.parseInt(outNum), totalQ, 2, factoryModel, orderId, remarks);
+            MaterielRecords materielRecord = new MaterielRecords(code, classifyName, model, potting, brand, price, 0,Integer.parseInt(outNum), totalQ, 2, factoryModel, orderId, remarks,null,null);
             recordsList.add(materielRecord);
         }
         recordsRepository.saveAll(recordsList);

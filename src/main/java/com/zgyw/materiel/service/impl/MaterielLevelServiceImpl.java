@@ -143,16 +143,29 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
     public void exportTemplate(HttpServletResponse response) {
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream("template/materiel.xlsx");
         SXSSFWorkbook workbook = ExportUtil.getWorkbook(0, inputStream);
-        ExportUtil.downLoadExcelToWebsite(workbook,response,"物料模板");
+        ExportUtil.downLoadExcelToWebsite(workbook,response,"入库订单模板");
     }
 
     @Override
     @Transactional
     public void importMateriel(MultipartFile file) {
         List<List<Object>> dataList = ImportUtil.checkFile(file, "物料编码", 11);
+        String fileName = file.getOriginalFilename().split(".")[0];
+        OrderRecords orderRecords = orderRecordsRepository.findByTypeAndName(1, fileName);
+        if (orderRecords != null) {
+            throw new MTException(ResultEnum.NAME_EXIST);
+        }
         Map<String, Classify> classifyMap = classifyService.getClassifySK();
-        Map<String, MaterielLevel> materielLevelMap = getMateriel();
-        List<MaterielLevel> materielLevels = new ArrayList<>();
+        Map<String, MaterielLevel> materielMap = getMateriel();
+        // 导入的文件相当于创建一个入库订单
+        OrderRecords records = new OrderRecords();
+        records.setName(fileName);
+        records.setRemarks("导入入库订单");
+        records.setInTime(new Date());
+        records.setStatus(0);
+        records.setType(1);
+        OrderRecords save = orderRecordsRepository.save(records);
+        List<MaterielRecords> recordsList = new ArrayList<>();
         for (int i = 0; i < dataList.size(); i++) {
             String code = (String)dataList.get(i).get(0);
             String classifyName = (String)dataList.get(i).get(1);
@@ -178,27 +191,16 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
             if (classify == null) {
                 throw new MTException("分类系统中还不存在!出现在第"+(i+2)+"行",900);
             }
-            //如果编码存在代表数量累加
-            MaterielLevel level = materielLevelMap.get(code);
-            if (level == null) {
-                MaterielLevel materielLevel = new MaterielLevel(code,model,potting,Integer.parseInt(quantity),price,brand,supplier,website,remarks,classify.getId(),factoryModel);
-                materielLevels.add(materielLevel);
-            } else {
-                Integer totalQuantity = Integer.parseInt(quantity)+level.getQuantity();
-                level.setQuantity(totalQuantity);
-                materielLevels.add(level);
+            //新增加的订单只是创建不直接进库存
+            MaterielLevel level = materielMap.get(code);
+            Integer totalQ = 0;
+            if (level != null) {
+                totalQ = level.getQuantity();
             }
+            MaterielRecords materielRecords = new MaterielRecords(code, classifyName, model, potting, brand, price, Integer.parseInt(quantity), 0, totalQ, 1, factoryModel, save.getId(), remarks, supplier,website);
+            recordsList.add(materielRecords);
         }
-        // 导入的文件相当于创建一个入库订单
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        OrderRecords records = new OrderRecords();
-        records.setName(file.getOriginalFilename()+sdf.format(new Date()));
-        records.setRemarks("导入入库订单"+sdf.format(new Date()));
-        records.setInTime(new Date());
-        records.setStatus(1);
-        records.setType(1);
-        orderRecordsRepository.save(records);
-        repository.saveAll(materielLevels);
+        recordsRepository.saveAll(recordsList);
     }
 
     @Override
@@ -219,7 +221,7 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
                     fileSystemService.deleteFile(materielLevel.getPhoto());
                 }
                 InputStream inputStream = file.getInputStream();
-                String photo = fileSystemService.uploadFile("/materiel" + fileName, inputStream);
+                String photo = fileSystemService.uploadFile("/materiel/" + fileName, inputStream);
                 if (StringUtils.isNotEmpty(photo)) {
                     materielLevel.setPhoto(photo);
                 }
