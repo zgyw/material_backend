@@ -150,7 +150,7 @@ public class MaterielLevelServiceImpl implements MaterielLevelService {
     @Transactional
     public void importMateriel(MultipartFile file) {
         List<List<Object>> dataList = ImportUtil.checkFile(file, "物料编码", 11);
-        String fileName = file.getOriginalFilename().split(".")[0];
+        String fileName = file.getOriginalFilename().substring(0,file.getOriginalFilename().lastIndexOf("."));
         OrderRecords orderRecords = orderRecordsRepository.findByTypeAndName(1, fileName);
         if (orderRecords != null) {
             throw new MTException(ResultEnum.NAME_EXIST);

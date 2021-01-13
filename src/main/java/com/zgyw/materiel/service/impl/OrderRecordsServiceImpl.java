@@ -118,7 +118,7 @@ public class OrderRecordsServiceImpl implements OrderRecordsService {
     @Override
     public void importMateriel(MultipartFile file) {
         List<List<Object>> dataList = ImportUtil.checkFile(file, "商品编码", 9);
-        String fileName = file.getOriginalFilename().split(".")[0];
+        String fileName = file.getOriginalFilename().substring(0,file.getOriginalFilename().lastIndexOf("."));
         OrderRecords orderRecords = repository.findByTypeAndName(2, fileName);
         if (orderRecords != null) {
             throw new MTException(ResultEnum.NAME_EXIST);
