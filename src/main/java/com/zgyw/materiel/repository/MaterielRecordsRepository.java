@@ -15,7 +15,9 @@ public interface MaterielRecordsRepository extends JpaRepository<MaterielRecords
 
     MaterielRecords findByCodeAndOrderId(String code,Integer orderId);
 
-    Page<MaterielRecords> findByCodeContainingAndOrderIdOrModelContainingAndOrderIdOrPottingContainingAndOrderId(String code, Integer id1, String model, Integer id2, String potting, Integer id3, Pageable pageable);
+    List<MaterielRecords> findByCodeContainingAndOrderIdOrModelContainingAndOrderIdOrPottingContainingAndOrderId(String code, Integer id1, String model, Integer id2, String potting, Integer id3);
 
-    Integer countByCodeContainingAndOrderIdOrModelContainingAndOrderIdOrPottingContainingAndOrderId(String code, Integer id1, String model, Integer id2, String potting, Integer id3);
+    List<MaterielRecords> findByOrderIdInAndName(List<Integer> orderIds,String name);
+
+    List<MaterielRecords> findByOrderIdInAndNameIn(List<Integer> orderIds,List<String> name);
 }

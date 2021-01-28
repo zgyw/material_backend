@@ -1,5 +1,6 @@
 package com.zgyw.materiel.controller;
 
+import com.zgyw.materiel.VO.ClassifyVO;
 import com.zgyw.materiel.VO.ResultVO;
 import com.zgyw.materiel.bean.Classify;
 import com.zgyw.materiel.enums.ResultEnum;
@@ -25,7 +26,7 @@ public class ClassifyController {
 
     @GetMapping("/classify/findAll")
     public ResultVO findAll() {
-        List<Classify> result = service.findAll();
+        List<ClassifyVO> result = service.findAll();
         return ResultVO.success(result);
     }
 

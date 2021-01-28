@@ -1,5 +1,6 @@
 package com.zgyw.materiel.service;
 
+import com.zgyw.materiel.VO.MaterielLevelVO;
 import com.zgyw.materiel.bean.MaterielLevel;
 import com.zgyw.materiel.form.MaterielLevelForm;
 import org.springframework.data.domain.Pageable;
@@ -18,11 +19,11 @@ public interface MaterielLevelService {
 
     void importMateriel(MultipartFile file);
 
-    MaterielLevel detail(Integer id);
+    MaterielLevelVO detail(Integer id);
 
     MaterielLevel modify(MaterielLevelForm form, MultipartFile file);
 
-    byte[] getPhoto(Integer id,HttpServletResponse response);
+    byte[] getPhoto(String photoPath,HttpServletResponse response);
 
     void delete(String code);
 

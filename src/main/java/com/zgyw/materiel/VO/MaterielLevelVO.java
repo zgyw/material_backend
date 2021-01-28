@@ -28,11 +28,8 @@ public class MaterielLevelVO {
     /** 库存数量 */
     private Integer quantity;
 
-    /** 供应商 */
+    /** 供应商信息 */
     private String supplier;
-
-    /** 网址 */
-    private String website;
 
     /** 备注 */
     private String remarks;
@@ -41,4 +38,10 @@ public class MaterielLevelVO {
     private String factoryModel;
 
     private String photo;
+
+    private Integer classifyId;
+
+    private Integer groupId;
+
+    private String note;
 }

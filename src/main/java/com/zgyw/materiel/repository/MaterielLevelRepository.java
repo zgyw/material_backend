@@ -15,4 +15,8 @@ public interface MaterielLevelRepository extends JpaRepository<MaterielLevel,Int
     MaterielLevel findByCode(String code);
 
     List<MaterielLevel> findByIdIn(List<Integer> ids);
+
+    List<MaterielLevel> findByClassifyId(Integer classifyId);
+
+    List<MaterielLevel> findByClassifyIdIn(List<Integer> classifyId);
 }

@@ -28,16 +28,16 @@ public class MaterielLevelForm {
     /** 品牌 */
     private String brand;
 
-    /** 供应商 */
+    /** 供应商信息 */
     private String supplier;
 
-    /** 网址 */
-    private String website;
+    /** 备注 */
+    private String note;
 
     /** 价格 */
     private String price;
 
-    /** 备注 */
+    /** 描述(规格) */
     private String remarks;
 
     /** 厂家型号 */

@@ -1,6 +1,7 @@
 package com.zgyw.materiel.controller;
 
 
+import com.zgyw.materiel.VO.MaterielLevelVO;
 import com.zgyw.materiel.VO.ResultVO;
 import com.zgyw.materiel.bean.MaterielLevel;
 import com.zgyw.materiel.enums.ResultEnum;
@@ -61,7 +62,7 @@ public class MaterielLevelController {
 
     @GetMapping("/materielLevel/detail")
     public ResultVO detail(@RequestParam(name = "id")Integer id) {
-        MaterielLevel result = service.detail(id);
+        MaterielLevelVO result = service.detail(id);
         return ResultVO.success(result);
     }
 
@@ -76,8 +77,8 @@ public class MaterielLevelController {
     }
 
     @GetMapping("/materielLevel/getPhoto")
-    public byte[] getPhoto(@RequestParam(name = "id")Integer id,HttpServletResponse response) {
-        byte[] result = service.getPhoto(id, response);
+    public byte[] getPhoto(@RequestParam(name = "photoPath")String photoPath,HttpServletResponse response) {
+        byte[] result = service.getPhoto(photoPath, response);
         return result;
     }
 

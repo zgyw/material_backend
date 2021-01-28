@@ -1,6 +1,7 @@
 package com.zgyw.materiel.controller;
 
 
+import com.zgyw.materiel.VO.MaterielRecordsVO;
 import com.zgyw.materiel.VO.ResultVO;
 import com.zgyw.materiel.bean.MaterielRecords;
 import com.zgyw.materiel.enums.ResultEnum;
@@ -8,7 +9,6 @@ import com.zgyw.materiel.exception.MTException;
 import com.zgyw.materiel.service.MaterielRecordsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @Slf4j
@@ -36,17 +35,14 @@ public class MaterielRecordsController {
 
     @GetMapping("/materielRecords/findCurOrder")
     public ResultVO findCurOrder (@RequestParam(name = "orderId") Integer orderId,
-                                  @RequestParam(name = "content",defaultValue = "") String content,
-                                  @RequestParam(name = "page",defaultValue = "0")Integer page,
-                                  @RequestParam(name = "size",defaultValue = "10")Integer size) {
-        PageRequest pageRequest = PageRequest.of(page,size);
-        Map<String,Object> result = service.findCurOrder(orderId,content,pageRequest);
+                                  @RequestParam(name = "content",defaultValue = "") String content) {
+        List<MaterielRecordsVO> result = service.findCurOrder(orderId,content);
         return ResultVO.success(result);
     }
 
     @GetMapping("/materielRecords/detail")
     public ResultVO detail(@RequestParam(name = "id")Integer id) {
-        MaterielRecords result = service.detail(id);
+        MaterielRecordsVO result = service.detail(id);
         return ResultVO.success(result);
     }
 

@@ -1,14 +1,16 @@
 package com.zgyw.materiel.service.impl;
 
-import com.zgyw.materiel.bean.Classify;
+import com.zgyw.materiel.VO.ClassifyVO;
+import com.zgyw.materiel.bean.*;
 import com.zgyw.materiel.enums.ResultEnum;
 import com.zgyw.materiel.exception.MTException;
-import com.zgyw.materiel.repository.ClassifyRepository;
+import com.zgyw.materiel.repository.*;
 import com.zgyw.materiel.service.ClassifyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -20,10 +22,28 @@ public class ClassifyServiceImpl implements ClassifyService {
 
     @Autowired
     private ClassifyRepository repository;
+    @Autowired
+    private TGroupRepository groupRepository;
+    @Autowired
+    private MaterielLevelRepository levelRepository;
+    @Autowired
+    private MaterielRecordsRepository recordsRepository;
+    @Autowired
+    private OrderRecordsRepository orderRepository;
 
     @Override
-    public List<Classify> findAll() {
-        return repository.findAll();
+    public List<ClassifyVO> findAll() {
+        List<ClassifyVO> voList = new ArrayList<>();
+        List<TGroup> tGroups = groupRepository.findAll();
+        for (TGroup tGroup : tGroups) {
+            ClassifyVO vo = new ClassifyVO();
+            List<Classify> classifyList = repository.findByGroupId(tGroup.getId());
+            vo.setId(tGroup.getId());
+            vo.setName(tGroup.getName());
+            vo.setChildren(classifyList);
+            voList.add(vo);
+        }
+        return voList;
     }
 
     @Override
@@ -80,6 +100,14 @@ public class ClassifyServiceImpl implements ClassifyService {
     @Override
     @Transactional
     public void delete(Integer id) {
-        repository.deleteById(id);
+        List<MaterielLevel> levels = levelRepository.findByClassifyId(id);
+        List<OrderRecords> orderRecords = orderRepository.findByStatus(0);
+        List<Integer> orderIds = orderRecords.stream().map(e -> e.getId()).collect(Collectors.toList());
+        Classify classify = repository.findById(id).orElse(null);
+        List<MaterielRecords> materielRecords = recordsRepository.findByOrderIdInAndName(orderIds, classify.getName());
+        if (levels.size() > 0 || materielRecords.size() > 0) {
+            throw new MTException(ResultEnum.CLASSIFY_EXIST);
+        }
+        repository.delete(classify);
     }
 }
